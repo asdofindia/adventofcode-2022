@@ -39,6 +39,25 @@ func getCommonLetters(rucksacks chan string, channel chan rune) {
 	close(channel)
 }
 
+func getBadges(rucksacks chan string, channel chan rune) {
+	for {
+		elf1, ok := <-rucksacks
+		elf2 := <-rucksacks
+		elf3 := <-rucksacks
+		if !ok {
+			break
+		}
+		for _, c := range elf1 {
+			if strings.ContainsRune(elf2, c) && strings.ContainsRune(elf3, c) {
+				channel <- c
+				break
+			}
+		}
+	}
+
+	close(channel)
+}
+
 func makePriorities() map[rune]int {
 	priorities := map[rune]int{}
 	for r, i := 'a', 1; r <= 'z'; r, i = r+1, i+1 {
@@ -62,10 +81,21 @@ func getPriorities(letters chan rune, channel chan int) {
 func main() {
 	rucksacks := make(chan string)
 	go getRucksacks(rucksacks)
-	commonLetters := make(chan rune)
-	go getCommonLetters(rucksacks, commonLetters)
+
+	// ===============
+	// Part 1
+	// commonLetters := make(chan rune)
+	// go getCommonLetters(rucksacks, commonLetters)
+	// priorities := make(chan int)
+	// go getPriorities(commonLetters, priorities)
+
+	// Part 2
+	badges := make(chan rune)
+	go getBadges(rucksacks, badges)
 	priorities := make(chan int)
-	go getPriorities(commonLetters, priorities)
+	go getPriorities(badges, priorities)
+	// ===============
+
 	sum := 0
 	for priority := range priorities {
 		sum += priority
